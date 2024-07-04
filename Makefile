@@ -23,7 +23,7 @@ composer-install: ## Installs dependencies
 
 .PHONY: composer-dependency-analyser
 composer-dependency-analyser: ## Performs static code analysis using composer-dependency-analyser
-	$(COMPOSER_DEPENDENCY_ANALYSER_BIN)
+	$(COMPOSER_DEPENDENCY_ANALYSER_BIN) --ignore-prod-only-in-dev-deps
 
 .PHONY: deptrac
 deptrac: ## Analyses own architecture using the default config confile
