@@ -62,7 +62,6 @@ final class Application extends BaseApplication
                 null,
                 InputOption::VALUE_REQUIRED,
                 'Location where cache file will be stored',
-                null
             ),
             new InputOption(
                 '--config-file',
@@ -95,16 +94,15 @@ final class Application extends BaseApplication
             return parent::doRun($input, $output);
         }
 
-        /** @var string|numeric|null $configFile */
-        $configFile = $input->getOption('config-file');
-        $config = $input->hasOption('config-file')
-            ? (string) $configFile
-            : $currentWorkingDirectory.DIRECTORY_SEPARATOR.'deptrac.yaml';
+        /** @var ?string $config */
+        $config = $input->getParameterOption(['--config-file', '-c'], null);
+        $config ??= $currentWorkingDirectory.DIRECTORY_SEPARATOR.'deptrac.yaml';
 
         /** @var ?string $cache */
         $cache = $input->getParameterOption('--cache-file', null);
 
         $factory = new ServiceContainerBuilder($currentWorkingDirectory);
+
         if (!in_array($input->getArgument('command'), ['init', 'list', 'help', 'completion'], true)) {
             $factory = $factory->withConfig($config);
         }
@@ -112,11 +110,17 @@ final class Application extends BaseApplication
         $noCache = $input->hasParameterOption('--no-cache', true);
 
         try {
-            $container = $factory->build($noCache ? false : $cache, $input->hasParameterOption('--clear-cache', true));
+            $container = $factory->build(
+                $noCache ? false : $cache,
+                $input->hasParameterOption('--clear-cache', true)
+            );
+
             $commandLoader = $container->get('console.command_loader');
+
             if (!$commandLoader instanceof CommandLoaderInterface) {
                 throw new RuntimeException('CommandLoader not initialized. Commands can not be registered.');
             }
+
             $this->setCommandLoader($commandLoader);
             $this->setDefaultCommand('analyse');
         } catch (CannotLoadConfiguration $e) {
